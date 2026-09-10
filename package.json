@@ -1,0 +1,32 @@
+{
+  "name": "fantasia",
+  "version": "1.0.0",
+  "description": "Self-managing workflow tool — paste a vague user story; Fantasia drives it to completion",
+  "main": "dist/index.js",
+  "bin": {
+    "fantasia": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "start:web": "tsx src/index.ts --web",
+    "demo": "tsx src/index.ts --demo",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "workflow",
+    "cli",
+    "agent",
+    "fantasia"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "type": "module"
+}

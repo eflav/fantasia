@@ -1,0 +1,13 @@
+node_modules/
+dist/
+workspace/**
+!workspace/.gitkeep
+.fantasia/stories/
+.fantasia/plans/
+.fantasia/outcomes/
+.fantasia/lessons/
+.fantasia/heuristics/
+.fantasia/checkpoints/
+.fantasia/index.json
+*.log
+.DS_Store

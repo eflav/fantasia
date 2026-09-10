@@ -1,0 +1,1 @@
+Maybe a tiny API endpoint that returns health or status? Keep it simple, whatever works.

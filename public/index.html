@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>fantasia</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; height: 100%;
+      background: #000; color: #0f0;
+      font-family: "IBM Plex Mono", "Consolas", "Courier New", monospace;
+      font-size: 14px;
+    }
+    #wrap { display: flex; flex-direction: column; height: 100%; padding: 12px; }
+    #out {
+      flex: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+      border: 1px solid #0a0; padding: 8px; margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    #row { display: flex; gap: 8px; align-items: center; }
+    #row::before { content: "$ fantasia>"; color: #0f0; }
+    #in {
+      flex: 1; background: #000; color: #0f0; border: 1px solid #0f0;
+      padding: 8px; font: inherit; outline: none;
+    }
+    #in:focus { border-color: #6f6; }
+    .dim { color: #3a3; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="out" class="dim">loading…</div>
+    <div id="row"><input id="in" autocomplete="off" spellcheck="false" autofocus/></div>
+  </div>
+  <script>
+    const out = document.getElementById('out');
+    const input = document.getElementById('in');
+    function append(text) {
+      out.textContent += (out.textContent ? '\n' : '') + text;
+      out.scrollTop = out.scrollHeight;
+    }
+    async function boot() {
+      try {
+        const r = await fetch('/api/banner');
+        const j = await r.json();
+        out.textContent = j.banner + '\nbackend: ' + j.backend + '\n';
+      } catch (e) {
+        out.textContent = 'fantasia web terminal\n(backend unreachable)\n';
+      }
+    }
+    async function exec(line) {
+      append('$ fantasia> ' + line);
+      input.disabled = true;
+      try {
+        const r = await fetch('/api/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ line }),
+        });
+        const j = await r.json();
+        for (const l of (j.lines || [])) append(l);
+        if (j.error) append('error: ' + j.error);
+      } catch (e) {
+        append('error: ' + e.message);
+      }
+      input.disabled = false;
+      input.focus();
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const v = input.value;
+        input.value = '';
+        if (v.trim()) exec(v);
+      }
+    });
+    boot();
+  </script>
+</body>
+</html>
