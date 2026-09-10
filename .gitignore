@@ -11,3 +11,6 @@ workspace/**
 .fantasia/index.json
 *.log
 .DS_Store
+.env
+.env.*
+!.env.example

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: fantasia
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start:web
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: FANTASIA_TOKEN
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-20250514

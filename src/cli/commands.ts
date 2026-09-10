@@ -29,9 +29,13 @@ ${GREEN}observe memory influence${RESET}
      lessons from A (weight >= 1) and matched heuristics.
   4. Also: \`memory\` shows recent lessons / heuristic hit counts.
 
-${GREEN}claude code${RESET}
-  If \`claude\` CLI is on PATH, Fantasia uses it for create/shell
-  steps; otherwise the local heuristic executor writes real files.
+${GREEN}backends${RESET}
+  Priority: ANTHROPIC_API_KEY → anthropic API;
+  else \`claude\` CLI (desktop) → claude;
+  else local heuristics (always available, no keys).
+  Force local: npm start -- --local
+  Phone/web: set ANTHROPIC_API_KEY on the host; Claude Code CLI
+  is optional desktop-only and not needed for iPhone access.
 `.trim();
 
 export const SAMPLES: { id: number; title: string; story: string }[] = [

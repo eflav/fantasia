@@ -6,7 +6,7 @@
 $ fantasia>
 ```
 
-C/UNIX aesthetic: black background, green monospace, teletype energy.
+C/UNIX aesthetic: black background, green monospace, teletype energy — CLI and a mobile-friendly web terminal.
 
 ## Quick start
 
@@ -16,41 +16,75 @@ npm install
 npm start
 ```
 
-Or:
+Or: `make install && make run`
 
-```bash
-make install
-make run
-```
-
-No API keys required. The local heuristic executor writes real files under `./workspace/`.
+**No API keys required.** The local heuristic executor writes real files under `./workspace/`. Demos stay fully keyless.
 
 ### One-shot / demo
 
 ```bash
-npm run demo                  # runs 3 seeded vague stories end-to-end
+npm run demo                  # 3 seeded vague stories end-to-end
 npm start -- --story='Need a todo list for launch week'
-npm start -- demo 1           # single sample
+npm start -- --local demo 1   # force local backend
 make demo
 ```
 
-### Optional web terminal
+## Web terminal (iPhone / phone)
+
+Fantasia’s web UI is a minimal green-on-black terminal that hits the same engine. **A real public URL is required for iPhone access** (Safari cannot reach your laptop’s `localhost`). Use a host (Render, Fly, Railway, …), a tunnel (`ngrok`, `cloudflared`), or LAN with your machine’s IP.
 
 ```bash
 npm run start:web
-# open http://127.0.0.1:3920
+# listens on 0.0.0.0:$PORT (default 3920)
+# open http://127.0.0.1:3920 locally
 ```
 
-Same engine as the CLI.
+Optional shared secret:
 
-## Commands (REPL)
+```bash
+export FANTASIA_TOKEN='your-secret'
+npm run start:web
+# phone: https://your-host/?token=your-secret
+```
+
+### Deploy (Docker / Render)
+
+```bash
+docker build -t fantasia .
+docker run -p 3920:3920 -e ANTHROPIC_API_KEY -e FANTASIA_TOKEN fantasia
+```
+
+Or use `render.yaml` / `Procfile` (`web: npm run start:web`). Set `ANTHROPIC_API_KEY` (and optionally `FANTASIA_TOKEN`) in the host’s env — never commit secrets.
+
+## Backends
+
+| Priority | When | Notes |
+|----------|------|--------|
+| **anthropic** | `ANTHROPIC_API_KEY` is set | Messages API (`claude-sonnet-4-20250514` by default). Best for **phone/web** hosts. |
+| **claude** | `claude` CLI on `PATH`, no API key, not `--local` | Optional **desktop** Claude Code path. |
+| **local** | always available | Heuristic executor; no keys; demos use this. |
+
+On Anthropic/Claude failure, Fantasia **falls back to local** for that step.
+
+```bash
+export ANTHROPIC_API_KEY='sk-ant-…'   # https://console.anthropic.com/
+# optional: export ANTHROPIC_MODEL='claude-3-5-sonnet-latest'
+npm start                 # picks anthropic
+npm start -- --local      # force local
+```
+
+See `.env.example`. Do not commit `.env`.
+
+**Claude Code CLI** is optional and desktop-oriented. For iPhone/web, prefer `ANTHROPIC_API_KEY` on the server — you do not need the `claude` binary on the host.
+
+## Commands (REPL / web)
 
 | Command | What it does |
 |--------|----------------|
 | *(paste a story)* | Assumptions → plan → execute → verify → reflect → memory |
 | `help` | Command help |
 | `history` | Past stories / outcomes |
-| `memory` | Durable memory dump (lessons, heuristics, counts) |
+| `memory` | Durable memory dump |
 | `status` | Backend, checkpoints, last run |
 | `retry` | Resume from last checkpoint |
 | `demo` / `demo 1\|2\|3` | Seeded vague stories |
@@ -58,63 +92,30 @@ Same engine as the CLI.
 
 ## How it works
 
-1. **Assumptions** — Ambiguity is resolved with logged defaults (never Q&A).
+1. **Assumptions** — Ambiguity resolved with logged defaults (never Q&A).
 2. **Plan** — Numbered steps (`analyze` / `create` / `modify` / `shell` / `verify` / `reflect`).
-3. **Execute** — `make`/`sh -x` style progress; checkpoints after each step; retries on failure.
-4. **Verify** — Writes `VERIFICATION.md`; asserts artifacts exist.
-5. **Reflect** — Writes lessons into `.fantasia/lessons/`; may add heuristics.
-6. **Next run** — Planner prints **MEMORY INFLUENCE** (lesson ids + heuristic matches). Plans change observably (e.g. mid-run self-check after a failure lesson, verify-always lessons, hit counts).
+3. **Execute** — Progress + checkpoints; retries on failure; never stalls on humans.
+4. **Verify** — Writes `VERIFICATION.md`.
+5. **Reflect** — Lessons into `.fantasia/lessons/`; may add heuristics.
+6. **Next run** — Prints **MEMORY INFLUENCE** (lesson ids + heuristic matches).
 
-### Optional Claude Code backend
-
-If the `claude` CLI is on your `PATH`, Fantasia uses it for create/modify/shell steps. On any failure it falls back to the local executor.
+### Observe memory influence
 
 ```bash
-npm start                 # prefer claude if available
-npm start -- --local      # force local heuristic executor
+npm start -- --local
+# fantasia> demo 1
+# fantasia> demo 2   # look for MEMORY INFLUENCE + mid-run self-check
+# fantasia> memory
 ```
 
 ## Memory layout
 
-All durable state lives under **`.fantasia/`** (next to the project):
-
 ```
 .fantasia/
-  index.json           # catalog
-  stories/             # raw + normalized stories
-  plans/               # full plans + step status
-  outcomes/            # success/fail summaries
-  lessons/             # post-run reflections (influence next plans)
-  heuristics/          # pattern → advice (seeded + learned)
-  checkpoints/         # crash/resume state
-```
-
-Artifacts from runs:
-
-```
+  index.json  stories/  plans/  outcomes/  lessons/  heuristics/  checkpoints/
 workspace/<slug>/
-  assumptions.md
-  …deliverables…
-  VERIFICATION.md
+  assumptions.md  …deliverables…  VERIFICATION.md
 ```
-
-## Observe memory influence (success criterion #3)
-
-```bash
-npm start
-# fantasia> demo 1          # completes; writes lessons
-# fantasia> demo 2          # look for MEMORY INFLUENCE block
-# fantasia> memory          # lessons + heuristic hit counts
-```
-
-In the second story’s output you should see:
-
-- `── MEMORY INFLUENCE ──`
-- `less lesson_…` lines citing lessons from the first run (e.g. “Always end with an explicit verify…”)
-- `heur heur_…` lines for matched patterns (`readme|document|…`)
-- `influencedBy: [heur_…, lesson_…]`
-
-After a **failed** run, later plans may gain an extra **Mid-run self-check (lesson-driven)** step — that is intentional and observable.
 
 ## Seeded samples
 
@@ -124,34 +125,24 @@ After a **failed** run, later plans may gain an extra **Mid-run self-check (less
 | 2 | `samples/02-readme.txt` | “Probably need a readme” |
 | 3 | `samples/03-api.txt` | Tiny health API |
 
-## Defaults we chose (no clarifying questions)
+## Defaults
 
-- Stack: **Node.js + TypeScript**, run via `tsx` (no build required for `npm start`)
-- Theme: green-on-black teletype CLI; optional vanilla web terminal
-- Offline-first local executor; Claude Code optional
-- Max **2 retries** per step; continue past failures rather than stall
-- Deliverables isolated under `workspace/<slug>/`
-- Memory path: `.fantasia/` relative to project root
+- Node 18+ / TypeScript via `tsx`
+- Green-on-black CLI + mobile web terminal (`viewport-fit=cover`, 16px input, `ret` send button, `visualViewport`)
+- Offline-first local executor; Anthropic API and Claude Code optional
+- Max 2 retries per step; continue past failures
+- Web binds `0.0.0.0`; optional `FANTASIA_TOKEN`
 
 ## Project layout
 
 ```
 fantasia/
-  package.json          # npm start → tsx src/index.ts
-  Makefile              # make run | demo | web
-  README.md
-  samples/              # vague story seeds
-  public/index.html     # web terminal
+  package.json  Makefile  Dockerfile  Procfile  render.yaml
+  public/index.html       # mobile web terminal
   src/
-    index.ts            # CLI entry
-    types/              # shared types
-    memory/store.ts     # durable .fantasia/ I/O
-    engine/             # assumptions, planner, runner, reflect
-    executor/           # local heuristics + optional claude
-    cli/                # banner, REPL, commands
-    web/server.ts       # tiny HTTP terminal API
-  workspace/            # generated artifacts (gitignored contents)
-  .fantasia/            # durable memory
+    executor/             # local | anthropic | claude
+    engine/  memory/  cli/  web/
+  samples/  workspace/  .fantasia/
 ```
 
 ## License
