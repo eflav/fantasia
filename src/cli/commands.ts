@@ -1,5 +1,6 @@
 import type { FantasiaEngine } from '../engine/runner.js';
 import type { LogFn } from '../types/index.js';
+import { cmdLessons, cmdResults } from './browse.js';
 
 const GREEN = '\x1b[32m';
 const AMBER = '\x1b[33m';
@@ -9,6 +10,9 @@ const RESET = '\x1b[0m';
 export const HELP = `
 ${GREEN}commands${RESET}
   help                 show this help
+  results              list recent workspace deliverables
+  results <slug>       show file contents for one result
+  lessons              recent lessons + top heuristics
   history              list past stories / outcomes
   memory               dump durable memory summary
   status               backend, checkpoints, last run
@@ -18,16 +22,19 @@ ${GREEN}commands${RESET}
   quit / exit / :q     leave the REPL
 
 ${GREEN}usage${RESET}
-  Paste any vague user story and press Enter.
-  Fantasia will print assumptions, a plan, execute, verify,
-  reflect, and update .fantasia/ — without asking questions.
+  Paste any vague user story and press Enter (or ret on phone).
+  Fantasia prints assumptions, a plan, executes, verifies,
+  reflects, and updates .fantasia/ — without asking questions.
+  After a run, SUMMARY previews the deliverable. Then:
+    results            — see what was written
+    results <slug>     — read it
+    lessons            — see self-improvement memory
 
-${GREEN}observe memory influence${RESET}
-  1. Run story A (e.g. demo 1)
-  2. Run story B (e.g. demo 2)
-  3. In story B output, look for ${AMBER}MEMORY INFLUENCE${RESET}:
-     lessons from A (weight >= 1) and matched heuristics.
-  4. Also: \`memory\` shows recent lessons / heuristic hit counts.
+${GREEN}self-improvement${RESET}
+  Each finished run writes lessons. The next plan shows
+  ${AMBER}MEMORY INFLUENCE${RESET} plus a plain line:
+    self-improve: applying N lessons / heuristics from prior runs
+  Use \`lessons\` anytime; use \`results\` to open artifacts.
 
 ${GREEN}backends${RESET}
   Priority: ANTHROPIC_API_KEY → anthropic API;
@@ -83,6 +90,15 @@ export async function handleCommand(
   }
   if (lower === 'status') {
     log(engine.statusText());
+    return 'handled';
+  }
+  if (lower === 'lessons') {
+    cmdLessons(engine, log);
+    return 'handled';
+  }
+  if (lower === 'results' || lower.startsWith('results ')) {
+    const q = trimmed.slice('results'.length).trim();
+    cmdResults(engine, log, q || undefined);
     return 'handled';
   }
   if (lower === 'history') {

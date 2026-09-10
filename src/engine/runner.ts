@@ -5,6 +5,7 @@ import { buildPlan } from './planner.js';
 import { normalizeStory } from './assumptions.js';
 import { reflect } from './reflect.js';
 import { detectBackend, executeStep, type BackendName } from '../executor/index.js';
+import { previewPrimaryDeliverable } from '../cli/browse.js';
 
 const GREEN = '\x1b[32m';
 const AMBER = '\x1b[33m';
@@ -79,6 +80,15 @@ export class FantasiaEngine {
       log('');
 
       log(g('── MEMORY INFLUENCE ──'));
+      if (built.plan.influencedBy.length) {
+        const nLess = built.lessonsUsed.length;
+        const nHeur = built.matched.length;
+        log(
+          a(
+            `self-improve: applying ${nLess} lesson${nLess === 1 ? '' : 's'} / ${nHeur} heuristic${nHeur === 1 ? '' : 's'} from prior runs`
+          )
+        );
+      }
       if (built.matched.length || built.lessonsUsed.length) {
         for (const h of built.matched) {
           log(`${a('heur')} ${h.id}  /${h.pattern}/ (hits=${h.hits})`);
@@ -92,6 +102,7 @@ export class FantasiaEngine {
         log(d('(no heuristics matched and no lessons yet — seed heuristics load on first boot)'));
       }
       log(d(`influencedBy: [${built.plan.influencedBy.join(', ') || 'none'}]`));
+      log(d('tip: type lessons   |   after run: results'));
       log('');
 
       log(g('── PLAN ──'));
@@ -206,8 +217,18 @@ export class FantasiaEngine {
     }
     log(`memory  updated under ${path.relative(this.config.rootDir, this.memory.root) || '.fantasia/'}`);
     log(d(summary));
+    if (success) {
+      const preview = previewPrimaryDeliverable(this.config.rootDir, outcome.artifacts, 20);
+      if (preview) {
+        log('');
+        log(g('── PREVIEW ──'));
+        log(d(preview.path + '  (first lines — full text: results <slug>)'));
+        for (const line of preview.lines) log(line);
+      }
+    }
     log('');
     log(g('memory updated. next plan will cite lessons/heuristics under MEMORY INFLUENCE.'));
+    log(d('open deliverables:  results          |  self-improve:  lessons'));
     log('');
 
     return outcome;

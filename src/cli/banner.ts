@@ -8,7 +8,7 @@ export const BANNER = `${GREEN}
   ║  paste a vague story; it drives itself to done       ║
   ║  memory: .fantasia/   artifacts: ./workspace/        ║
   ╚══════════════════════════════════════════════════════╝
-${RESET}${DIM}  type a user story, or: help | history | memory | status | retry | demo | quit
+${RESET}${DIM}  type a user story, or: help | results | lessons | history | memory | status | demo | quit
 ${RESET}`;
 
 export function prompt(): string {

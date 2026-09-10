@@ -83,12 +83,17 @@ See `.env.example`. Do not commit `.env`.
 |--------|----------------|
 | *(paste a story)* | Assumptions → plan → execute → verify → reflect → memory |
 | `help` | Command help |
+| `results` | List recent `workspace/<slug>/` deliverables |
+| `results <slug>` | Print key files (README, TODO, VERIFICATION, …) |
+| `lessons` | Recent lessons + top heuristics (self-improve) |
 | `history` | Past stories / outcomes |
 | `memory` | Durable memory dump |
 | `status` | Backend, checkpoints, last run |
 | `retry` | Resume from last checkpoint |
 | `demo` / `demo 1\|2\|3` | Seeded vague stories |
 | `quit` | Exit |
+
+On phone: after a story finishes, type **`results`** then **`results <slug>`** to read the deliverable. Type **`lessons`** to see self-improvement. SUMMARY also prints a **PREVIEW** of the primary file.
 
 ## How it works
 
